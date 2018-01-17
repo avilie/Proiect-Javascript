@@ -1,0 +1,241 @@
+var size = 15;
+var mines = 5;
+var countie = 0;
+var mem = [];
+var vecRet = [];
+var myVar;
+var castigat = 0;
+
+function make2DArray(size){
+  arr = new Array(size);
+  for(let i = 0; i < arr.length; i++){
+    arr[i] = new Array(size);
+  }
+  return arr;
+}
+
+var cellVec = make2DArray(size);
+
+function Map(size){
+  this.size = size;
+}
+
+Map.prototype.show = function(){
+  var i, j,
+    //linieHeght = parseInt(window.innerHeight / this.size) - this.size + "px",
+    linieHeght = 50 + "px",
+    linieWidth = 50 + "px";
+    //linieWidth = parseInt(window.innerWidth / this.size) - this.size + "px";
+
+  var bigDiv = document.createElement("div");
+  bigDiv.setAttribute("class", "bigBig");
+  for(i = 0; i < this.size; i++){
+    var lin = document.createElement("div");
+    lin.setAttribute("class", "Linia" + i);
+    //lin.style.backgroundColor = "red";
+    //lin.style.height = linieHeght;
+    //lin.style.width = linieWidth;
+     for(j = 0; j < this.size; j++){
+       var col = document.createElement("div");
+       col.setAttribute("class", "Coloana" + j);
+       col.style.height = linieHeght;
+       col.style.width = linieWidth;
+
+       var butt = document.createElement("button");
+       butt.setAttribute("class", "designButton");
+       butt.style.height = linieHeght;
+       butt.style.width = linieWidth;
+       col.appendChild(butt);
+
+       lin.appendChild(col);
+    }
+    bigDiv.appendChild(lin);
+  }
+   document.body.appendChild(bigDiv);
+}
+
+function Cell(i, j){
+  this.letsFlag = 0;
+  this.countNeigh = 0;
+  this.i = i;
+  this.j = j;
+  this.mine = false;
+
+  this.revealed = false;
+}
+
+Cell.prototype.show = function(){
+    var x = document.getElementsByClassName("Linia" + this.i)[0].childNodes;
+       if(this.revealed){
+         if(this.mine){
+        x.item(this.j).textContent = 'B';
+        }
+           else{
+             if(this.countNeigh > 0){
+                x.item(this.j).textContent = this.countNeigh;
+              } else {
+		x.item(this.j).style.backgroundColor = "#829595";
+   		x.item(this.j).textContent = "";
+   }
+  }
+ }
+}
+
+Cell.prototype.addFlag = function(){
+	if(this.letsFlag == 0){
+	var x = document.getElementsByClassName("Linia" + this.i)[0].childNodes;
+	var y = x.item(this.j).childNodes;
+	y[0].textContent = 'F';
+	this.letsFlag = 1;}
+	else if(this.letsFlag == 1){
+	var x = document.getElementsByClassName("Linia" + this.i)[0].childNodes;
+	var y = x.item(this.j).childNodes;
+	y[0].textContent = '';
+	this.letsFlag = 0;}
+}
+
+Cell.prototype.flood = function(){
+  for(let i = -1; i <= 1; i++){
+    for(let j = -1; j <= 1; j++){
+      let to = this.i + i;
+      let po = this.j + j;
+      if( to > -1 && to < size && po > -1 && po < size ){
+        var neigh = cellVec[to][po];
+          if(!neigh.mine && !neigh.revealed){
+            neigh.revealed = true;
+	    neigh.show();
+	    if(neigh.countNeigh == 0){
+	    neigh.flood();
+	    }
+          }
+      }
+    }
+  }
+}
+
+Cell.prototype.neigh = function(){
+  if(this.mine){
+    this.countNeigh = -1;
+    return;
+  }
+  var nrVec = 0;
+  for(let i = -1; i <= 1; i++){
+    for(let j = -1; j <= 1; j++){
+      let to = this.i + i;
+      let po = this.j + j;
+      if( to > -1 && to < size && po > -1 && po < size ){
+      var neigh = cellVec[to][po];
+      if(neigh.mine){
+        nrVec++;
+      }
+    }
+  }
+}this.countNeigh = nrVec;}
+
+function gameOver(){
+	for(let i = 0; i < size; i++){
+		for(let j = 0; j < size; j++){
+			cellVec[i][j].revealed = true;
+			cellVec[i][j].show();
+		}
+	}
+		window.alert("Ai pierdut!");
+}
+
+function gameWon(){
+	if (castigat == 1){
+		for(let i = 0; i < countie; i++){
+		clearInterval(vecRet[i]);}
+		countie--;
+		return;
+	}
+	let check = 0;
+	let calcul = size * size - mines;
+	console.log("Calcul: " + calcul);
+	for(let i = 0; i < size; i++){
+		for(let j = 0; j < size; j++){
+			if(cellVec[i][j].revealed && !cellVec[i][j].mine)
+			     check++;
+		}
+	}
+	console.log("Check: " + check);
+	if(check == calcul){
+		castigat = 1;
+		for(let i = 0; i < size; i++){
+			for(let j = 0; j < size; j++){
+				cellVec[i][j].revealed = true;
+				cellVec[i][j].show();
+		}
+	}
+		window.alert("Ai castigat!");
+		for(let i = 0; i < countie; i++){
+		clearInterval(vecRet[i]);}
+		countie--;
+		return;
+
+	}
+	vecRet[countie] = myVar;
+	countie++;
+}
+
+var newMap = new Map(size);
+newMap.show();
+
+for(let i = 0; i < size; i++){
+  for(let j = 0; j < size; j++){
+    cellVec[i][j] = new Cell(i, j);
+    mem.push([i, j]);
+  }
+}
+
+for(let n = 0; n < mines; n++){
+  let temp = Math.floor(Math.random() * (mem.length - 1));
+  let temp1 = mem[temp];
+  let i = temp1[0];
+  let j = temp1[1];
+  cellVec[i][j].mine = true;
+  mem.splice(temp, 1);
+}
+
+
+
+for(let i = 0; i < size; i++){
+  for(let j = 0; j < size; j++){
+    cellVec[i][j].neigh();
+  }
+}
+
+for(let i = 0; i < size; i++){
+  for(let j = 0; j < size; j++){
+    cellVec[i][j].show();
+  }
+}
+
+
+for(let i = 0; i < size; i++){
+  var x = document.getElementsByClassName("Linia" + i)[0].childNodes;
+  for(let j = 0; j < size; j++){
+    var y = x.item(j).childNodes;
+    y[0].addEventListener("mousedown", function(event){
+	    if(event.button == 0){
+		cellVec[i][j].revealed = true;
+      if(cellVec[i][j].countNeigh == 0){
+        cellVec[i][j].flood();
+      }
+      if(cellVec[i][j].mine == true){
+      	gameOver();}
+
+
+	} else if(event.button == 1){
+		cellVec[i][j].addFlag();
+	}
+    });
+
+    y[0].addEventListener("mousedown", function(event){
+        if(event.button == 0){
+	cellVec[i][j].show();}
+    });
+  }
+}
+
+myVar = setInterval(gameWon, 1000);
